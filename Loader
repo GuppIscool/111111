@@ -2,13 +2,8 @@
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
-
-local highlightEnabled = true
-local nametagEspEnabled = true
-local hpBarEspEnabled = true
-local uiOpen = true
+local Teams = game:GetService("Teams")
 
 
 --// Preventing Multiple Processes
@@ -381,8 +376,6 @@ Load(); SendNotification(Title, "Aimbot script successfully loaded! Check the Gi
 
 
 
-
-
 -- Function to create a Highlight instance
 local function createHighlight(player)
     local highlight = Instance.new("Highlight")
@@ -393,11 +386,11 @@ local function createHighlight(player)
     return highlight
 end
 
--- Function to create a BillboardGui for nametag
-local function createNametagEsp(player)
+-- Function to create a BillboardGui
+local function createBillboardGui(player)
     local billboardGui = Instance.new("BillboardGui")
     billboardGui.Adornee = player.Character:FindFirstChild("Head")
-    billboardGui.Size = UDim2.new(0, 200, 0, 50)
+    billboardGui.Size = UDim2.new(4, 0, 1, 0)
     billboardGui.StudsOffset = Vector3.new(0, 2, 0)
     billboardGui.AlwaysOnTop = true
 
@@ -412,79 +405,26 @@ local function createNametagEsp(player)
     billboardGui.Parent = player.Character:FindFirstChild("Head")
 end
 
--- Function to create HP Bar ESP
-local function createHpBarEsp(player)
-    local billboardGui = Instance.new("BillboardGui")
-    billboardGui.Adornee = player.Character:FindFirstChild("Head")
-    billboardGui.Size = UDim2.new(0, 200, 0, 50)
-    billboardGui.StudsOffset = Vector3.new(-2, 2, 0)
-    billboardGui.AlwaysOnTop = true
-
-    local frame = Instance.new("Frame")
-    frame.Parent = billboardGui
-    frame.Size = UDim2.new(1, 0, 0.2, 0)
-    frame.Position = UDim2.new(0, 0, 0.8, 0)
-    frame.BackgroundColor3 = Color3.new(1, 0, 0)
-    
-    local function updateHp()
-        while hpBarEspEnabled and frame.Parent do
-            local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                frame.Size = UDim2.new(humanoid.Health / humanoid.MaxHealth, 0, 0.2, 0)
-            end
-            wait(0.1)
-        end
-    end
-
-    coroutine.wrap(updateHp)()
-
-    billboardGui.Parent = player.Character:FindFirstChild("Head")
-end
-
--- Function to add visual ESP
-local function addVisualEsp(player)
-    if highlightEnabled then
-        createHighlight(player)
-    end
-    if nametagEspEnabled then
-        createNametagEsp(player)
-    end
-    if hpBarEspEnabled then
-        createHpBarEsp(player)
-    end
-end
-
--- Function to remove visual ESP
-local function removeVisualEsp(player)
-    if player.Character then
-        for _, child in pairs(player.Character:GetChildren()) do
-            if child:IsA("Highlight") or child:IsA("BillboardGui") then
-                child:Destroy()
-            end
-        end
-    end
-end
-
--- Main function to add visual ESP to players
-local function manageVisualEsp()
+-- Main function to highlight players and add BillboardGui
+local function highlightPlayers()
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            removeVisualEsp(player)
-            addVisualEsp(player)
+            createHighlight(player)
+            createBillboardGui(player)
         end
     end
 end
 
 -- Highlight players and add BillboardGui when the script runs
-manageVisualEsp()
+highlightPlayers()
 
 -- Highlight new players and add BillboardGui when they join
 Players.PlayerAdded:Connect(function(player)
     if player ~= LocalPlayer then
         player.CharacterAdded:Connect(function(character)
             character:WaitForChild("Head") -- Wait for the character's head to load
-            removeVisualEsp(player)
-            addVisualEsp(player)
+            createHighlight(player)
+            createBillboardGui(player)
         end)
     end
 end)
@@ -492,160 +432,7 @@ end)
 -- Update highlights and BillboardGui when a player's team changes
 Players.PlayerTeamColorChanged:Connect(function(player)
     if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-        removeVisualEsp(player)
-        addVisualEsp(player)
-    end
-end)
-
--- Function to create the UI
-local function createUI()
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "ESPMenu"
-    screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-    
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 300, 0, 200)
-    frame.Position = UDim2.new(0.5, -150, 0.5, -100)
-    frame.BackgroundTransparency = 0.5
-    frame.BackgroundColor3 = Color3.new(0, 0, 0)
-    frame.Parent = screenGui
-
-    local uiToggle = true
-    local function updateVisibility()
-        screenGui.Enabled = uiToggle
-    end
-    
-    UserInputService.InputBegan:Connect(function(input)
-        if input.KeyCode == Enum.KeyCode.End then
-            uiToggle = not uiToggle
-            updateVisibility()
-        end
-    end)
-
-    local tabHolder = Instance.new("Frame")
-    tabHolder.Size = UDim2.new(1, 0, 0, 30)
-    tabHolder.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
-    tabHolder.Parent = frame
-
-    local visualsButton = Instance.new("TextButton")
-    visualsButton.Text = "Visuals"
-    visualsButton.Size = UDim2.new(0.5, 0, 1, 0)
-    visualsButton.BackgroundColor3 = Color3.new(0.4, 0.4, 0.4)
-    visualsButton.Parent = tabHolder
-
-    local aimButton = Instance.new("TextButton")
-    aimButton.Text = "Aim"
-    aimButton.Size = UDim2.new(0.5, 0, 1, 0)
-    aimButton.Position = UDim2.new(0.5, 0, 0, 0)
-    aimButton.BackgroundColor3 = Color3.new(0.4, 0.4, 0.4)
-    aimButton.Parent = tabHolder
-
-    local visualsFrame = Instance.new("Frame")
-    visualsFrame.Size = UDim2.new(1, 0, 1, -30)
-    visualsFrame.Position = UDim2.new(0, 0, 0, 30)
-    visualsFrame.BackgroundTransparency = 1
-    visualsFrame.Parent = frame
-
-    local highlightToggle = Instance.new("TextButton")
-    highlightToggle.Text = "Highlight: On"
-    highlightToggle.Size = UDim2.new(1, -20, 0, 30)
-    highlightToggle.Position = UDim2.new(0, 10, 0, 10)
-    highlightToggle.BackgroundColor3 = Color3.new(0.4, 0.4, 0.4)
-    highlightToggle.Parent = visualsFrame
-
-    highlightToggle.MouseButton1Click:Connect(function()
-        highlightEnabled = not highlightEnabled
-        highlightToggle.Text = "Highlight: " .. (highlightEnabled and "On" or "Off")
-        manageVisualEsp()
-    end)
-
-    local nametagToggle = Instance.new("TextButton")
-    nametagToggle.Text = "Nametag ESP: On"
-    nametagToggle.Size = UDim2.new(1, -20, 0, 30)
-    nametagToggle.Position = UDim2.new(0, 10, 0, 50)
-    nametagToggle.BackgroundColor3 = Color3.new(0.4, 0.4, 0.4)
-    nametagToggle.Parent = visualsFrame
-
-    nametagToggle.MouseButton1Click:Connect(function()
-        nametagEspEnabled = not nametagEspEnabled
-        nametagToggle.Text = "Nametag ESP: " .. (nametagEspEnabled and "On" or "Off")
-        manageVisualEsp()
-    end)
-
-    local hpBarToggle = Instance.new("TextButton")
-    hpBarToggle.Text = "HP Bar ESP: On"
-    hpBarToggle.Size = UDim2.new(1, -20, 0, 30)
-    hpBarToggle.Position = UDim2.new(0, 10, 0, 90)
-    hpBarToggle.BackgroundColor3 = Color3.new(0.4, 0.4, 0.4)
-    hpBarToggle.Parent = visualsFrame
-
-    hpBarToggle.MouseButton1Click:Connect(function()
-       
-        hpBarEspEnabled = not hpBarEspEnabled
-        hpBarToggle.Text = "HP Bar ESP: " .. (hpBarEspEnabled and "On" or "Off")
-        manageVisualEsp()
-    end)
-
-    -- Make the frame draggable
-    local dragging = false
-    local dragInput, dragStart, startPos
-
-    local function update(input)
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-
-    frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    frame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
-            update(input)
-        end
-    end)
-
-    -- Show the Visuals tab by default
-    visualsFrame.Visible = true
-
-    aimButton.MouseButton1Click:Connect(function()
-        visualsFrame.Visible = false
-    end)
-
-    visualsButton.MouseButton1Click:Connect(function()
-        visualsFrame.Visible = true
-    end)
-
-    updateVisibility()
-end
-
--- Create the UI
-createUI()
-
--- Toggle the UI with the End key
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.End then
-        uiOpen = not uiOpen
-        for _, gui in ipairs(LocalPlayer.PlayerGui:GetChildren()) do
-            if gui.Name == "ESPMenu" then
-                gui.Enabled = uiOpen
-            end
-        end
+        createHighlight(player)
+        createBillboardGui(player)
     end
 end)
